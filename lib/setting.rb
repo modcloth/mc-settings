@@ -1,30 +1,28 @@
 class Setting
-  class SettingNotFound < RuntimeError;
-  end
-  class SettingFileError < RuntimeError;
-  end
+  class SettingNotFound < RuntimeError; end
+  class SettingFileError < RuntimeError; end
 
   attr_reader :available_settings
 
-  @@instance = nil
+  class << self; attr_accessor :instance; end
 
   def self.load params = {}
-    raise RuntimeError.new("Settings already initialized") if @@instance
+    raise RuntimeError.new("Settings already initialized") if self.instance
     reload(params)
   end
 
   def self.reload params = {}
-    @@instance = Setting.new(params)
+    Setting.instance = Setting.new(params)
   end
 
   def self.available_settings
-    @@instance ? @@instance.available_settings : {}
+    self.instance ? self.instance.available_settings : {}
   end
 
   # get a setting value by [] notation
   def self.[](name)
     check_value(name.to_s)
-    @@instance.value_for(name.to_s)
+    self.instance.value_for(name.to_s)
   end
 
   def self.method_missing(method, *args, &block)
@@ -38,11 +36,6 @@ class Setting
     else
       self[name]
     end
-  end
-
-
-  def self.instance
-    @@instance
   end
 
 #   def self.per_page_options_array
@@ -73,8 +66,8 @@ class Setting
   private
 
   def self.check_value(name)
-    raise RuntimeError.new("settings are not yet initialized") unless @@instance
-    raise SettingNotFound.new("#{name} not found") unless @@instance.has_key?(name)
+    raise RuntimeError.new("settings are not yet initialized") unless self.instance
+    raise SettingNotFound.new("#{name} not found") unless self.instance.has_key?(name)
   end
 
   def load(params)
