@@ -1,18 +1,14 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-class Rails
-
-end
 describe Setting do
   subject { Setting }
 
   context "Test environment" do
     before :each do
-      Rails.stub!(:root).and_return('./')
       stub_setting_files
-      begin
-        Setting.load("config/settings/default.yml", "config/settings/test.yml", "config/settings/custom.yml")
-      rescue
-      end
+      Setting.reload(
+          :files => ["default.yml", "environments/test.yml"],
+          :path => "config/settings",
+          :local => true)
     end
     it 'should return test specific values' do
       Setting.available_settings['one'].should == "test"
@@ -23,6 +19,7 @@ describe Setting do
     it "handles multiple values" do
 
       Setting['six'].should == {"default"=>"default value", "extra"=>"extra"}
+      Setting.available_settings['six']['default'].should == "default value"
 #      Setting['six', 'extra'].should == "extra"
 #      Setting['six', 'default'].should == "extra"
 
@@ -40,6 +37,15 @@ describe Setting do
       Setting.default_setting.should == 1
       Setting['seven'].should == "seven from custom"
       #Setting['seven']['default'].should == "seven"
+    end
+    it "should handle empty strings" do
+      Setting.empty.should == ""
+    end
+    it "should responds to ? mark" do
+      Setting.autologin?.should == true
+    end
+    it "should returns false correctly" do
+      Setting.flag_false.should be(false)
     end
   end
 end

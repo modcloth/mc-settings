@@ -1,19 +1,22 @@
 class Setting
-  class SettingNotFound < RuntimeError; end
+  class SettingNotFound < RuntimeError;
+  end
+  class SettingFileError < RuntimeError;
+  end
 
   attr_reader :available_settings
 
   @@instance = nil
 
-  def self.load *files
+  def self.load params = {}
     raise RuntimeError.new("Settings already initialized") if @@instance
-    reload(files)
+    reload(params)
   end
 
-  def self.reload files
-    @@instance = Setting.new(files)
+  def self.reload params = {}
+    @@instance = Setting.new(params)
   end
-  
+
   def self.available_settings
     @@instance ? @@instance.available_settings : {}
   end
@@ -23,7 +26,7 @@ class Setting
     check_value(name.to_s)
     @@instance.value_for(name.to_s)
   end
-  
+
   def self.method_missing(method, *args, &block)
     # see if this method is defined above us in the hierarchy
     super(method, *args)
@@ -31,7 +34,7 @@ class Setting
     name = method.to_s
     if name[-1, 1] == "?"
       name.chomp!('?')
-      self[name].to_i > 0
+      self[name]['default'].to_i > 0
     else
       self[name]
     end
@@ -48,8 +51,8 @@ class Setting
 
   #=================================================================================
 
-  def initialize(files)
-    load files
+  def initialize(params = {})
+    load params
   end
 
   def has_key?(key)
@@ -61,9 +64,7 @@ class Setting
     if v.is_a?(Hash) && v.size > 1
       v
     elsif v.is_a?(Hash) && v.has_key?("default")
-      # if not passing ["key"]["default"] return default value
-      # if ["key"] only, return
-      v['default']
+      v['default'].nil? ? "" : v['default']
     else
       v
     end
@@ -71,17 +72,28 @@ class Setting
 
   private
 
-    def self.check_value(name)
-      raise RuntimeError.new("settings are not yet initialized") unless @@instance
-      raise SettingNotFound.new("#{name} not found") unless @@instance.has_key?(name)
+  def self.check_value(name)
+    raise RuntimeError.new("settings are not yet initialized") unless @@instance
+    raise SettingNotFound.new("#{name} not found") unless @@instance.has_key?(name)
+  end
+
+  def load(params)
+    files = []
+    path  = params[:path]
+    params[:files].each do |file|
+      files << File.join(path, file)
     end
-  
-    def load(files)
-      @available_settings ||= {}
-      files.each do |file|
-         path = File.join(Rails.root, file)
-         @available_settings.merge!(YAML::load(File.open(path))) if File.exists?(path)
+    if params[:local]
+      files << Dir.glob(File.join(path, 'local', '*.yml'))
+    end
+    @available_settings ||= {}
+    files.flatten.each do |file|
+      begin
+        @available_settings.merge!(YAML::load(File.open(file)) || {}) if File.exists?(file)
+      rescue Exception => e
+        raise SettingNotFound.new("Error parsing file #{file}, with: #{e.message}")
       end
     end
-
+    @available_settings
+  end
 end
