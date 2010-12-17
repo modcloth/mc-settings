@@ -7,7 +7,7 @@ describe Setting do
       stub_setting_files
       Setting.reload(
           :files => ["default.yml", "environments/test.yml"],
-          :path => "config/settings",
+          :path  => "config/settings",
           :local => true)
     end
     it 'should return test specific values' do

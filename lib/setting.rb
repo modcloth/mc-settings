@@ -1,34 +1,29 @@
+require 'singleton'
 class Setting
   class SettingNotFound < RuntimeError; end
   class SettingFileError < RuntimeError; end
 
-  attr_reader :available_settings
-
-  class << self; attr_accessor :instance; end
-
-  def self.load params = {}
-    raise RuntimeError.new("Settings already initialized") if self.instance
-    reload(params)
-  end
+  include Singleton
 
   def self.reload params = {}
-    Setting.instance = Setting.new(params)
+    @available_settings = {}
+    self.load params
   end
 
   def self.available_settings
-    self.instance ? self.instance.available_settings : {}
+    self.instance ? @available_settings : {}
   end
 
   # get a setting value by [] notation
   def self.[](name)
-    check_value(name.to_s)
-    self.instance.value_for(name.to_s)
+    self.check_value(name.to_s)
+    self.value_for(name.to_s)
   end
 
   def self.method_missing(method, *args, &block)
     # see if this method is defined above us in the hierarchy
     super(method, *args)
-  rescue NoMethodError
+  rescue
     name = method.to_s
     if name[-1, 1] == "?"
       name.chomp!('?')
@@ -38,39 +33,28 @@ class Setting
     end
   end
 
-#   def self.per_page_options_array
-#    self.per_page_options.split(%r{[\s,]}).collect(&:to_i).select {|n| n > 0}.sort
-#  end
-
-  #=================================================================================
-
-  def initialize(params = {})
-    load params
+  def initialize
+    @available_settings ||= {}
   end
 
-  def has_key?(key)
-    @available_settings.has_key?(key)
-  end
+  class << self
+    def has_key?(key)
+      @available_settings.has_key?(key)
+    end
 
-  def value_for(value)
-    v = @available_settings[value]
-    if v.is_a?(Hash) && v.size > 1
-      v
-    elsif v.is_a?(Hash) && v.has_key?("default")
-      v['default'].nil? ? "" : v['default']
-    else
-      v
+    def value_for(value)
+      v = @available_settings[value]
+      if v.is_a?(Hash) && v.size > 1
+        v
+      elsif v.is_a?(Hash) && v.has_key?("default")
+        v['default'].nil? ? "" : v['default']
+      else
+        v
+      end
     end
   end
 
-  private
-
-  def self.check_value(name)
-    raise RuntimeError.new("settings are not yet initialized") unless self.instance
-    raise SettingNotFound.new("#{name} not found") unless self.instance.has_key?(name)
-  end
-
-  def load(params)
+  def self.load(params)
     files = []
     path  = params[:path]
     params[:files].each do |file|
@@ -89,4 +73,12 @@ class Setting
     end
     @available_settings
   end
+
+  private
+
+  def self.check_value(name)
+    raise RuntimeError.new("settings are not yet initialized") unless self.instance
+    raise SettingNotFound.new("#{name} not found") unless self.has_key?(name)
+  end
+
 end
