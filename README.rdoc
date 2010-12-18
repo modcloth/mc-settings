@@ -1,6 +1,40 @@
-= mc-settings
+= Settings
 
-Description goes here.
+Application Settings Manager
+
+== Usage in Rails
+Settings conventions
+    key_name:
+      default: value
+    key_name: value
+    multiples_values:
+      default: default
+      another_value: another_default
+
+
+  config/settings/default.yml
+  config/settings/environments/development.yml
+  config/settings/environments/production.yml
+  config/settings/local/custom.yml
+  config/settings/local/verysecret.yml
+
+  Setting.load(:files => ["default.yml", "environments/#{Rails.env}.yml"],
+             :path   => "#{Rails.root}/config/settings",
+             :local => true)
+
+  Setting.key_name
+  Setting.available_settings['key_name']
+  Setting.available_settings['key_name']['another_value']
+  Setting['key_name']
+  Setting[:key_name]
+  Setting['multiples_values']['another_value']
+
+
+This means:
+  * Read default.yml, and load all setings in Setting object
+  * Override specific keys depending on rails environment
+  * Apply all #{path}/local/*.yml files to Settings, overriding common keys
+
 
 == Contributing to mc-settings
  
