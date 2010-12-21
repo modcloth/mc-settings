@@ -1,53 +1,82 @@
-= Settings
+= Application Settings Manager
 
-Application Settings Manager
+This gem provides an easy and capistrano-friendly way to manage application configuration across 
+multiple environments, such as development, QA, staging, production, etc.
 
-== Usage in Rails
-Settings conventions
-    key_name:
-      default: value
-    key_name: value
-    multiples_values:
-      default: default
-      another_value: another_default
+Applications typically rely on configuration settings, such as host names, URLs, usernames and many
+more. Some change between environemnts, some do not.  This gem makes managing this hierarchy of
+settings values easy and provides convenient and compact syntax to access the settings.
 
+Configuration is stored in YAML files, in the following format, with it's top level structure being a hash with keys being the names of individual settings. For example:
 
-  config/settings/default.yml
-  config/settings/environments/development.yml
-  config/settings/environments/production.yml
-  config/settings/local/custom.yml
-  config/settings/local/verysecret.yml
+ tax:
+   default: 0.0
+   california: 7.5
+ states:
+   default: 
+     - 'CA'
+     - 'WA'
+     - 'NY'
+   ship_to:
+     - 'CA'
+     - 'NY'
 
-  Setting.load(:files => ["default.yml", "environments/#{Rails.env}.yml"],
-             :path   => "#{Rails.root}/config/settings",
-             :local => true)
+etc.
+
+== Usage 
+
+Once settings are initialized (see below), they can be used in code in the following way:
 
   Setting.key_name
-  Setting.available_settings['key_name']
-  Setting.available_settings['key_name']['another_value']
   Setting['key_name']
   Setting[:key_name]
   Setting['multiples_values']['another_value']
 
+For example, given the above YAML file:
 
-This means:
-  * Read default.yml, and load all setings in Setting object
-  * Override specific keys depending on rails environment
-  * Apply all #{path}/local/*.yml files to Settings, overriding common keys
+  Setting.tax => 0.0
+  Setting.tax['california'] => 7.5
+  Setting[:tax] => { 'default' => 0.0, 'california' => 7.5 } 
+  Setting.states => [ 'CA', 'WA', 'NY' ]
+  Setting.states['ship_to'] => [ 'CA', 'NY' ]
 
+The following usage is supported for backwards compatibility, but is deprecated and should
+not be used for new projects:
 
-== Contributing to mc-settings
- 
-* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
-* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
-* Fork the project
-* Start a feature/bugfix branch
-* Commit and push until you are happy with your contribution
-* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+  Setting.available_settings['key_name']
+  Setting.available_settings['key_name']['another_value']
+
+== Settings Loading
+
+This gem should be initialized in your environment.rb (if using Rails), or in any other
+application initialization block.
+
+Consider an example:
+
+  Setting.load(:files => ["default.yml", "environments/#{Rails.env}.yml"],
+               :path  => "#{Rails.root}/config/settings",
+               :local => true)
+
+This parameter hash tells Setting to load settings hashes, in order, from the following
+files under "development" (assuming you have two files "custom.yml" and "secret.yml" under your
+RAILS_ROOT/config/settings/local folder):
+
+  config/settings/default.yml
+  config/settings/environments/development.yml
+  config/settings/local/custom.yml
+  config/settings/local/secret.yml
+
+The following is the sequence of loading explained:
+
+* Read all files in :files list in order, and load their settings.
+* Last file loaded overrides previous value (if already exist).
+* Load all #{path}/local/*.yml files to Settings, overriding common keys. Files are loaded in order sorted by name.
 
 == Copyright
 
-Copyright (c) 2010 Edwin Cruz. See LICENSE.txt for
-further details.
+Copyright 2010 (c) ModCloth Inc.
+
+Authors: 2010 Edwin Cruz & Konstantin Gredeskoul
+
+See LICENSE.txt for further details.
 
