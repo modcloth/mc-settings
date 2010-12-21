@@ -20,6 +20,7 @@ Configuration is stored in YAML files, in the following format, with it's top le
    ship_to:
      - 'CA'
      - 'NY'
+ math_pi: 3.14159526
 
 etc.
 
@@ -27,15 +28,14 @@ etc.
 
 Once settings are initialized (see below), they can be used in code in the following way:
 
-  Setting.key_name
-  Setting['key_name']
-  Setting[:key_name]
-  Setting['multiples_values']['another_value']
+* Setting.key_name is optimized to return default value if available.
+* Setting.key_name(:sub_key_name) returns value from the 2nd level hash if available.
+* Setting[:key_name] & Setting['key_name'] return entire 2nd-level hash without any regard for whether default value exists.
 
 For example, given the above YAML file:
 
   Setting.tax => 0.0
-  Setting.tax['california'] => 7.5
+  Setting.tax(:california) => 7.5
   Setting[:tax] => { 'default' => 0.0, 'california' => 7.5 } 
   Setting.states => [ 'CA', 'WA', 'NY' ]
   Setting.states['ship_to'] => [ 'CA', 'NY' ]
@@ -44,7 +44,7 @@ The following usage is supported for backwards compatibility, but is deprecated 
 not be used for new projects:
 
   Setting.available_settings['key_name']
-  Setting.available_settings['key_name']['another_value']
+  Setting.available_settings['key_name']['sub_key_name']
 
 == Settings Loading
 
