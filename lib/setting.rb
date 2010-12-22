@@ -64,8 +64,7 @@ class Setting
     self.instance.value_for(value)
   end
 
-  # The following usage is deprecated, but is supported for backwards
-  # compatibility
+  # <b>DEPRECATED:</b> Please use <tt>method accessors</tt> instead.
   def self.available_settings
     self.instance.available_settings
   end
