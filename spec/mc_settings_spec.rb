@@ -2,7 +2,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe Setting do
   subject { Setting }
 
-  context "Test environment" do
+  context "Test with stubs" do
     before :each do
       stub_setting_files
       Setting.reload(
@@ -10,6 +10,7 @@ describe Setting do
           :path  => "config/settings",
           :local => true)
     end
+    
     it 'should return test specific values' do
       Setting.available_settings['one'].should == "test"
       Setting.one.should == "test"
@@ -30,9 +31,10 @@ describe Setting do
     it "should support symbols as keys" do
       Setting[:six].should == {"default"=>"default value", "extra"=>"extra"}
     end
+
     it "handles default key" do
       Setting.default_setting.should == 1
-      Setting['seven'].should == "seven from custom"
+      Setting['seven']['default'].should == "seven from custom"
     end
 
     it "should handle empty strings" do
@@ -46,5 +48,40 @@ describe Setting do
     it "should returns false correctly" do
       Setting.flag_false.should be(false)
     end
+  end
+
+  context "Test from file" do
+    before :each do
+      Setting.reload(
+         :files => ['sample.yml'],
+         :path => File.join(File.dirname(__FILE__)) + '/fixtures'
+      )
+    end
+
+    it 'should support [] syntax' do
+      Setting['tax']['default'].should == 0.0
+      Setting['tax'].should == { 'default' => 0.0, 'california' => 7.5 }
+    end
+
+    it 'should support method invocation syntax' do
+      Setting.tax.should == 0.0
+
+      Setting.tax(:default).should     == Setting.tax
+      Setting.tax('default').should    == Setting.tax
+      Setting.tax(:california).should  == 7.5
+
+      Setting.states.should            == ['CA', 'WA', 'NY']
+      Setting.states(:default).should  == Setting.states
+      Setting.states(:ship_to).should  == ['CA', 'NY']
+    end
+
+    it 'should correctly process Boolean values' do
+      Setting.boolean_true?.should be(true)
+      Setting.boolean_true.should == 4
+      Setting.boolean_false?.should be(false)
+      Setting.boolean_false?(:default).should be(false)
+      Setting.boolean_false?(:negated).should be(true)
+    end
+
   end
 end

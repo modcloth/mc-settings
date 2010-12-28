@@ -1,0 +1,16 @@
+tax:
+  default: 0.0
+  california: 7.5
+states:
+  default: 
+   - 'CA'
+   - 'WA'
+   - 'NY'
+  ship_to:
+   - 'CA'
+   - 'NY'
+boolean_true:
+  default: 4
+boolean_false:
+  default: false
+  negated: true

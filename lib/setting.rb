@@ -1,84 +1,159 @@
 require 'singleton'
+require 'yaml'
 class Setting
-  class SettingNotFound < RuntimeError; end
-  class SettingFileError < RuntimeError; end
+  class NotFound < RuntimeError; end
+  class FileError < RuntimeError; end
+  class AlreadyLoaded < RuntimeError; end
 
   include Singleton
 
-  def self.reload params = {}
-    @available_settings = {}
-    self.load params
+  attr_reader :available_settings
+
+  # This method can be called only once.
+  #
+  # Parameter hash looks like this:
+  #
+  #  {  :files => [ "file1.yml", "file2.yml", ...],
+  #     :path  => "/var/www/apps/my-app/current/config/settings",
+  #     :local => true }
+  #
+  # If :local => true is set, we will load all *.yml files under :path/local directory
+  # after all files in :files have been loaded.  "Local" settings thus take precedence
+  # by design.  See README for more details.
+  #
+  def self.load(args = {})
+    raise AlreadyLoaded.new('Settings already loaded') if self.instance.loaded?
+    self.instance.load(args)
   end
 
-  def self.available_settings
-    self.instance ? @available_settings : {}
+  def self.reload(args = {})
+    self.instance.load(args)
   end
 
-  # get a setting value by [] notation
-  def self.[](name)
-    self.check_value(name.to_s)
-    self.value_for(name.to_s)
-  end
-
+  # In Method invocation syntax we collapse Hash values
+  # and return a single value if 'default' is found among keys
+  # or Hash has only one key/value pair.
+  #
+  # For example, if the YML data is:
+  # tax:
+  #   default: 0.0
+  #   california: 7.5
+  #
+  # Then calling Setting.tax returns "0.0""
+  #
+  # This is the preferred method of using settings class.
+  #
   def self.method_missing(method, *args, &block)
-    # see if this method is defined above us in the hierarchy
-    super(method, *args)
-  rescue
-    name = method.to_s
-    if name[-1, 1] == "?"
-      name.chomp!('?')
-      self[name]['default'].to_i > 0
-    else
-      self[name]
+    self.instance.value_for(method, args) do |v, args|
+      self.instance.collapse_hashes(v, args)
     end
   end
+
+  # In [] invocation syntax, we return settings value 'as is' without
+  # Hash conversions.
+  #
+  # For example, if the YML data is:
+  # tax:
+  #   default: 0.0
+  #   california: 7.5
+  #
+  # Then calling Setting['tax'] returns
+  #   { 'default' => "0.0", 'california' => "7.5"}
+
+  def self.[](value)
+    self.instance.value_for(value)
+  end
+
+  # <b>DEPRECATED:</b> Please use <tt>method accessors</tt> instead.
+  def self.available_settings
+    self.instance.available_settings
+  end
+
+  #=================================================================
+  # Instance Methods
+  #=================================================================
 
   def initialize
     @available_settings ||= {}
   end
 
-  class << self
-    def has_key?(key)
-      @available_settings.has_key?(key)
+  def has_key?(key)
+    @available_settings.has_key?(key) ||
+      (key[-1,1] == '?' && @available_settings.has_key?(key.chop))
+  end
+
+  def value_for(key, args = [])
+    name = key.to_s
+    raise NotFound.new("#{name} was not found") unless has_key?(name)
+    bool = false
+    if name[-1,1] == '?'
+      name.chop!
+      bool = true
     end
 
-    def value_for(value)
-      v = @available_settings[value]
-      if v.is_a?(Hash) && v.size > 1
-        v
-      elsif v.is_a?(Hash) && v.has_key?("default")
-        v['default'].nil? ? "" : v['default']
-      else
-        v
-      end
+    v = @available_settings[name]
+    if block_given?
+      v = yield(v, args)
+    end
+    
+    if v.is_a?(Fixnum) && bool
+      v.to_i > 0
+    else
+      v
     end
   end
 
-  def self.load(params)
+  # This method performs collapsing of the Hash settings values if the Hash
+  # contains 'default' value, or just 1 element.
+  
+  def collapse_hashes(v, args)
+    if v.is_a?(Hash)
+      if args.empty?
+        if v.has_key?("default")
+          v['default'].nil? ? "" : v['default']
+        elsif v.keys.size == 1
+          v.values.first
+        else
+          v
+        end
+      else
+        v[args[0].to_s]
+      end
+    else
+      v
+    end
+  end
+  
+  def loaded?
+    @loaded
+  end
+
+  def load(params)
+    # reset settings hash
+    @available_settings = {}
+    @loaded = false
+
     files = []
-    path  = params[:path]
+    path  = params[:path] || Dir.pwd
     params[:files].each do |file|
       files << File.join(path, file)
     end
+
     if params[:local]
       files << Dir.glob(File.join(path, 'local', '*.yml'))
     end
-    @available_settings ||= {}
+
     files.flatten.each do |file|
       begin
         @available_settings.merge!(YAML::load(File.open(file)) || {}) if File.exists?(file)
       rescue Exception => e
-        raise SettingNotFound.new("Error parsing file #{file}, with: #{e.message}")
+        raise FileError.new("Error parsing file #{file}, with: #{e.message}")
       end
     end
+
+    @loaded = true
     @available_settings
   end
 
-  private
-
-  def self.check_value(name)
-    raise RuntimeError.new("settings are not yet initialized") unless self.instance
-    raise SettingNotFound.new("#{name} not found") unless self.has_key?(name)
-  end
 
 end
