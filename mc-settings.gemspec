@@ -26,6 +26,7 @@ Gem::Specification.new do |s|
     "VERSION",
     "lib/mc-settings.rb",
     "lib/setting.rb",
+    "mc-settings.gemspec",
     "spec/fixtures/sample.yml",
     "spec/mc_settings_spec.rb",
     "spec/spec_helper.rb",
