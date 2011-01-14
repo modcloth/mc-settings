@@ -9,6 +9,8 @@ def stub_setting_files
     six:
       default: "default value"
       extra: "extra"
+      deep_level:
+        value: "even deeper level"
     seven:
       default: "seven"
     empty:
@@ -25,6 +27,9 @@ CONTENT
       three: 5
       four: "6"
     five: "test string"
+    six:
+      extra: "recursively overriden"
+    test_specific: "exist"
   CONTENT
 
   empty = <<-CONTENT

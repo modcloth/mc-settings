@@ -1,5 +1,21 @@
 require 'singleton'
 require 'yaml'
+
+class Hash
+  def recursive_merge!(other)
+    other.keys.each do |k|
+      if self[k].is_a?(Array) && other[k].is_a?(Array)
+        self[k] += other[k]
+      elsif self[k].is_a?(Hash) && other[k].is_a?(Hash)
+        self[k].recursive_merge!(other[k])
+      else
+        self[k] = other[k]
+      end
+    end
+    self
+  end
+end
+
 class Setting
   class NotFound < RuntimeError; end
   class FileError < RuntimeError; end
@@ -145,7 +161,7 @@ class Setting
 
     files.flatten.each do |file|
       begin
-        @available_settings.merge!(YAML::load(File.open(file)) || {}) if File.exists?(file)
+        @available_settings.recursive_merge!(YAML::load(File.open(file)) || {}) if File.exists?(file)
       rescue Exception => e
         raise FileError.new("Error parsing file #{file}, with: #{e.message}")
       end
@@ -154,6 +170,4 @@ class Setting
     @loaded = true
     @available_settings
   end
-
-
 end

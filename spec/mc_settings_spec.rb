@@ -10,7 +10,7 @@ describe Setting do
           :path  => "config/settings",
           :local => true)
     end
-    
+
     it 'should return test specific values' do
       Setting.available_settings['one'].should == "test"
       Setting.one.should == "test"
@@ -22,14 +22,13 @@ describe Setting do
     end
 
     it "handles multiple values" do
-      Setting['six'].should == {"default"=>"default value", "extra"=>"extra"}
+      Setting['six'].should == {"default"=>"default value", "extra"=>"recursively overriden", "deep_level"=>{"value"=>"even deeper level"}}
       Setting.available_settings['six']['default'].should == "default value"
-      Setting.available_settings['six']['extra'].should == "extra"
       Setting.seven.should == "seven from custom"
     end
 
     it "should support symbols as keys" do
-      Setting[:six].should == {"default"=>"default value", "extra"=>"extra"}
+      Setting[:six].should == {"default"=>"default value", "extra"=>"recursively overriden"}
     end
 
     it "handles default key" do
@@ -48,13 +47,32 @@ describe Setting do
     it "should returns false correctly" do
       Setting.flag_false.should be(false)
     end
+
+    it "should merge keys recursivelly" do
+      Setting.six(:extra).should == "recursively overriden"
+      Setting.six(:deep_level)[:value] = "even deeper level"
+    end
+
+    it "should create keys if it does not exist" do
+      Setting.test_specific.should == "exist"
+    end
+  end
+
+  context "When running with threads" do
+    it "should keep its values" do
+      3.times do |time|
+        Thread.new {
+          Setting.available_settings.shoud_not be_empty
+        }
+      end
+    end
   end
 
   context "Test from file" do
     before :each do
       Setting.reload(
          :files => ['sample.yml'],
-         :path => File.join(File.dirname(__FILE__)) + '/fixtures'
+         :path  => File.join(File.dirname(__FILE__)) + '/fixtures'
       )
     end
 

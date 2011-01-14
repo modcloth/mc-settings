@@ -69,8 +69,8 @@ RAILS_ROOT/config/settings/local folder):
 The following is the sequence of loading explained:
 
 * Read all files in :files list in order, and load their settings.
-* Last file loaded overrides previous value (if already exist).
-* Load all #{path}/local/*.yml files to Settings, overriding common keys. Files are loaded in order sorted by name.
+* Last file loaded overrides recursively previous value (if already exist).
+* Load all #{path}/local/*.yml files to Settings, overriding recursively common keys. Files are loaded in order sorted by name.
 
 == Copyright
 
