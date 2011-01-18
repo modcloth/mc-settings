@@ -7,7 +7,7 @@ Applications typically rely on configuration settings, such as host names, URLs,
 more. Some change between environemnts, some do not.  This gem makes managing this hierarchy of
 settings values easy and provides convenient and compact syntax to access the settings.
 
-Configuration is stored in YAML files, in the following format, with it's top level structure being a hash with keys being the names of individual settings. For example:
+Configuration is stored in YAML files, in the following format, with it's top level structure being a hash with keys being the names of individual settings. For example, one file could be:
 
  tax:
    default: 0.0
@@ -53,24 +53,51 @@ application initialization block.
 
 Consider an example:
 
-  Setting.load(:files => ["default.yml", "environments/#{Rails.env}.yml"],
-               :path  => "#{Rails.root}/config/settings",
+  Setting.load(:path  => "#{Rails.root}/config/settings",
+               :files => ["default.yml", "environments/#{Rails.env}.yml"],
                :local => true)
 
-This parameter hash tells Setting to load settings hashes, in order, from the following
-files under "development" (assuming you have two files "custom.yml" and "secret.yml" under your
-RAILS_ROOT/config/settings/local folder):
+This parameter hash configures which YML files to load, and in what order, and from where.
+
+* :path specifies the "root" folder where settings files will be loaded from
+* :files is an array that lists file names relative to the :path. In the example above, settings folder contains subfolder "environments" where Rails-specific environment files are located (such as "development.yml", "staging.yml", "production.yml", etc)
+* :local can be optionally specified as a true value, and if specified Setting gem will load all *.yml files that live under the :path/local folder. 
+
+Below is an example of the loading order based on the above example, "development" Rails environment, and a "local" folder with 3 additional YML files:
 
   config/settings/default.yml
   config/settings/environments/development.yml
-  config/settings/local/custom.yml
-  config/settings/local/secret.yml
+  config/settings/local/authorize-net.yml
+  config/settings/local/paypal.yml
+  config/settings/local/other.yml
 
-The following is the sequence of loading explained:
+Each YML file defines a ruby Hash.  During file loading, the hashes are merged, that is keys loaded in early files may be overwritten by keys in other files. This is deliberate and by design: this allows you to create tiny override files for each environment, or even each machine you want to deploy to. 
 
-* Read all files in :files list in order, and load their settings.
-* Last file loaded overrides recursively previous value (if already exist).
-* Load all #{path}/local/*.yml files to Settings, overriding recursively common keys. Files are loaded in order sorted by name.
+Note that as of 0.1.1, the keys can be overridden recursively. To understand this, please review the following simple example:
+
+default.yml:
+
+  tax: 
+    california: 
+      sales: 
+        7.5
+      property: 
+        1.03
+
+  Setting.tax(:california) => { :sales => 7.5, :property => 1.03 }
+
+tax-override.yml:
+
+  tax: 
+    california: 
+      property: 
+        12.4
+ 
+  Setting.tax(:california) => { :sales => 7.5, :property => 12.4 }
+
+
+
+
 
 == Copyright
 
