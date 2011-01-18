@@ -30,7 +30,7 @@ application configuration file:
 Setting Gem provides Setting.load(..) method to load configuration from files in a way that allows 
 some configuration files to override previously loaded values, and then offers a simple method API 
 to access the values, for example Setting.tax(:california) or Setting.tax.  Supporting default values
-in 2nd-level hashes is one of the advantages of using this gem.
+in 2nd, 3rd, etc.. -level hashes is one of the advantages of using this gem.
 
 By loading configuration from files, Setting is inherently compatible with Capistrano deployment 
 methodology, where a certain set of files may become "activated" by simply sym-linking them into 
