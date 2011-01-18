@@ -37,7 +37,7 @@ methodology, where a certain set of files may become "activated" by simply sym-l
 the appropriate settings folder.
 
 Note: using example above, "1st level" hash is the one with keys "tax", "states" and "math_pi".  
-2nd-level hash is, for example the tax definition one, with a key "default" and "california".  
+2nd-level hash is, for example, the tax definition one, with keys "default" and "california".  
 
 == Usage in Code
 
@@ -104,7 +104,7 @@ be overwritten by values in subsequent files. This is deliberate and by design: 
 small "override" files for each environment, or even each machine you want to deploy to. Exactly how you split your
 application settings in files is up to you.
 
-== Nested Hashes
+== Nested Hashes and Default Values
 
 MC Setting gem provides a convenient way to access nested values, including full support for the default values within
 nested hashes (as of 0.1.1).
@@ -121,11 +121,13 @@ default.yml:
       url: http://ship.mycompany.com:3443/shipper
       name: Shipping
 
-  Setting.load(:files)          => ['default.yml'], :path => ...)
+  Setting.load(:files => ['default.yml'], :path => ...)
+
   Setting.tax(:inventory)       => { :url => "http://localhost:3443/inventory_manager" :name => "Inventory Management"}
   Setting.tax(:inventory, :url) => "http://localhost:3443/inventory_manager"
 
-staging.yml is changing URLs for services so they work in the staging environment:
+staging.yml is changing URLs for services so they work in the staging environment.  Service URLs have been changed for
+staging only:
 
   services: 
     inventory:
@@ -133,10 +135,8 @@ staging.yml is changing URLs for services so they work in the staging environmen
     shipping:
       url: http://localhost:8008/shipper
 
-  # Let's load both of these YML files:
   Setting.load(:files => ['default.yml', 'staging.yml'], :path => ...)
 
-  # Below services URLs for staging merged with previously defined configuration
   Setting.tax(:inventory)       => { :url => "http://localhost:8009/inventory_manager" :name => "Inventory Management"}
   Setting.tax(:inventory, :url) => "http://localhost:8008/inventory_manager"
 
