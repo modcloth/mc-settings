@@ -36,6 +36,9 @@ By loading configuration from files, Setting is inherently compatible with Capis
 methodology, where a certain set of files may become "activated" by simply sym-linking them into 
 the appropriate settings folder.
 
+Note: using example above, "1st level" hash is the one with keys "tax", "states" and "math_pi".  
+2nd-level hash is, for example the tax definition one, with a key "default" and "california".  
+
 == Usage in Code
 
 Once configuration is initialized using Setting#load or Setting#reload methods (see below), they can be used in 
@@ -43,8 +46,8 @@ code in the following way:
 
 * Setting.key_name is optimized to return default value if available instead of a Hash. 
 * Setting.key_name(:sub_key_name) returns a value from the 2nd level hash.
-* Setting.key_name(:sub_key_name, :sub_sub_key_name) returns value from the 3rd level hash if available. The algorithm is recursive, so there is no limit to the number of nested hashes you can access this way.
-* Special syntax Setting[:key_name], Setting[:key_name][:sub_key_name], etc also supported. This method, however, does not  
+* Setting.key_name(:sub_key_name, :sub_sub_key_name) returns value from the 3rd level hash if available. The algorithm is recursive, so only the maximum method stack depth will limit the number of nested hash values you can access this way.
+* Special syntax Setting[:key_name], Setting[:key_name][:sub_key_name], etc also supported. This method, however, does not support default values (see below).
 
 Method notation is recommended over square bracket notation for acessing single values. However, square bracket notation
 may be useful when you want to fetch the entire 2nd level hash that includes the default value, instead of the
