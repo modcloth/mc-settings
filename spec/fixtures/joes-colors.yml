@@ -1,0 +1,9 @@
+color:
+  pants:
+    favorite:
+      :orange
+  shorts:
+    favorite:
+      :white
+    default:
+      :stripes

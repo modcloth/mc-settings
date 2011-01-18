@@ -14,3 +14,22 @@ boolean_true:
 boolean_false:
   default: false
   negated: true
+color:
+  default:
+    :grey
+  pants:
+    default:
+      :purple
+    favorite:
+      :red
+    school:
+      :blue
+  shorts:
+    default:
+      :plaid
+    favorite:
+      :yellow
+    school:
+      :black
+     
+

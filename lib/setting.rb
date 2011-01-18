@@ -111,7 +111,7 @@ class Setting
     if block_given?
       v = yield(v, args)
     end
-    
+
     if v.is_a?(Fixnum) && bool
       v.to_i > 0
     else
@@ -123,7 +123,7 @@ class Setting
   # contains 'default' value, or just 1 element.
   
   def collapse_hashes(v, args)
-    if v.is_a?(Hash)
+    out = if v.is_a?(Hash)
       if args.empty?
         if v.has_key?("default")
           v['default'].nil? ? "" : v['default']
@@ -133,10 +133,16 @@ class Setting
           v
         end
       else
-        v[args[0].to_s]
+        v[args.shift.to_s]
       end
     else
       v
+    end
+
+    if out.is_a?(Hash)
+      collapse_hashes(out, args)
+    else
+      out
     end
   end
   

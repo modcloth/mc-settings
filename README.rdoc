@@ -28,28 +28,35 @@ etc.
 
 Once settings are initialized (see below), they can be used in code in the following way:
 
-* Setting.key_name is optimized to return default value if available.
-* Setting.key_name(:sub_key_name) returns value from the 2nd level hash if available.
+* Setting.key_name is optimized to return default value if available instead of a Hash.
+* Setting.key_name(:sub_key_name) returns a value from the 2nd level hash, if available (optimized for default as well).
+* Setting.key_name(:sub_key_name, :sub_sub_key_name) returns value from the 3rd level hash if available.
 * Setting[:key_name] & Setting['key_name'] return entire 2nd-level hash without any regard for whether default value exists.
 
-For example, given the above YAML file:
+Method notation is recommended over square bracket notation for acessing single values. However, square bracket notation
+may be useful when yuo want to fetch the entire 2nd level hash that includes the default value, instead of the
+default value itself.
+
+For example, given the above YAML file, you can access the settings in your code as follows:
 
   Setting.tax => 0.0
   Setting.tax(:california) => 7.5
-  Setting[:tax] => { 'default' => 0.0, 'california' => 7.5 } 
+
+  Setting.math_pi => 3.14159526
+
   Setting.states => [ 'CA', 'WA', 'NY' ]
   Setting.states['ship_to'] => [ 'CA', 'NY' ]
 
-The following usage is supported for backwards compatibility, but is deprecated and should
-not be used for new projects:
+Square bracket syntax returns the hash:
 
-  Setting.available_settings['key_name']
-  Setting.available_settings['key_name']['sub_key_name']
+  Setting[:tax] => { 'default' => 0.0, 'california' => 7.5 } 
 
-== Settings Loading
+== Loading Settings
 
-This gem should be initialized in your environment.rb (if using Rails), or in any other
-application initialization block.
+The gem should be initialized in your environment.rb (if using Rails), or in any other
+application initialization block.  Setting.load() method is provided for loading settings, and it
+can be called only once in application lifecycle, or it will throw an exception.  If you need to reload
+settings completely, you can use reload() method with similar arguments.
 
 Consider an example:
 
@@ -57,13 +64,14 @@ Consider an example:
                :files => ["default.yml", "environments/#{Rails.env}.yml"],
                :local => true)
 
-This parameter hash configures which YML files to load, and in what order, and from where.
+The argument is a parameter hash that configures which YML files to load, and in what order, and from where.
 
 * :path specifies the "root" folder where settings files will be loaded from
 * :files is an array that lists file names relative to the :path. In the example above, settings folder contains subfolder "environments" where Rails-specific environment files are located (such as "development.yml", "staging.yml", "production.yml", etc)
 * :local can be optionally specified as a true value, and if specified Setting gem will load all *.yml files that live under the :path/local folder. 
 
-Below is an example of the loading order based on the above example, "development" Rails environment, and a "local" folder with 3 additional YML files:
+Below is list of YML files loaded in order specified in the above example, assuming that "development" is
+the Rails environment, and "local" folder exists with 3 additional YML files in it:
 
   config/settings/default.yml
   config/settings/environments/development.yml
@@ -71,33 +79,44 @@ Below is an example of the loading order based on the above example, "developmen
   config/settings/local/paypal.yml
   config/settings/local/other.yml
 
-Each YML file defines a ruby Hash.  During file loading, the hashes are merged, that is keys loaded in early files may be overwritten by keys in other files. This is deliberate and by design: this allows you to create tiny override files for each environment, or even each machine you want to deploy to. 
+Each YML file defines a ruby Hash.  During file loading, the hashes are merged, so that values loaded in early files may
+be overwritten by values in subsequent files. This is deliberate and by design: it allows you to create
+small "override" files for each environment, or even each machine you want to deploy to. Exactly how you split your
+application settings in files is up to you.
 
-Note that as of 0.1.1, the keys can be overridden recursively. To understand this, please review the following simple example:
+== Nested Hashes
+
+MC Setting gem provides a convenient way to access nested values, including full support for the default values within
+nested hashes (as of 0.1.1).
+
+Consider the following nested hash example:
 
 default.yml:
 
   tax: 
-    california: 
+    california:
       sales: 
         7.5
       property: 
         1.03
 
+  Setting.load(:files => ['default.yml'], :path => ...)
   Setting.tax(:california) => { :sales => 7.5, :property => 1.03 }
+  Setting.tax(:california, :sales) => 7.5
+  Setting.tax(:california, :property) => 1.03
 
-tax-override.yml:
+tax-override.yml (adding a default value to California, and changing property tax value):
 
   tax: 
-    california: 
+    california:
+      default:
+        0.0
       property: 
         12.4
- 
-  Setting.tax(:california) => { :sales => 7.5, :property => 12.4 }
 
-
-
-
+  Setting.load(:files => ['default.yml', 'tax-override.yml'], :path => ...)
+  Setting.tax(:california) => 0.0 # default value used now
+  Setting.tax(:california, :property) => 12.4
 
 == Copyright
 

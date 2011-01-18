@@ -6,8 +6,8 @@ describe Setting do
     before :each do
       stub_setting_files
       Setting.reload(
-          :files => ["default.yml", "environments/test.yml"],
           :path  => "config/settings",
+          :files => ["default.yml", "environments/test.yml"],
           :local => true)
     end
 
@@ -22,13 +22,9 @@ describe Setting do
     end
 
     it "handles multiple values" do
-      Setting['six'].should == {"default"=>"default value", "extra"=>"recursively overriden", "deep_level"=>{"value"=>"even deeper level"}}
+      Setting[:six].should == {"default"=>"default value", "extra"=>"recursively overriden", "deep_level"=>{"value"=>"even deeper level"}}
       Setting.available_settings['six']['default'].should == "default value"
       Setting.seven.should == "seven from custom"
-    end
-
-    it "should support symbols as keys" do
-      Setting[:six].should == {"default"=>"default value", "extra"=>"recursively overriden"}
     end
 
     it "handles default key" do
@@ -50,7 +46,7 @@ describe Setting do
 
     it "should merge keys recursivelly" do
       Setting.six(:extra).should == "recursively overriden"
-      Setting.six(:deep_level)[:value] = "even deeper level"
+      Setting.six(:deep_level, :value).should == "even deeper level"
     end
 
     it "should create keys if it does not exist" do
@@ -71,8 +67,8 @@ describe Setting do
   context "Test from file" do
     before :each do
       Setting.reload(
-         :files => ['sample.yml'],
-         :path  => File.join(File.dirname(__FILE__)) + '/fixtures'
+         :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
+         :files => ['sample.yml']
       )
     end
 
@@ -99,6 +95,28 @@ describe Setting do
       Setting.boolean_false?.should be(false)
       Setting.boolean_false?(:default).should be(false)
       Setting.boolean_false?(:negated).should be(true)
+    end
+  end
+
+  context "Test recursive overrides and nested hashes" do
+    before :each do
+      Setting.reload(
+         :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
+         :files => ['sample.yml', 'joes-colors.yml']
+      )
+    end
+
+    it 'should override colors with Joes and support nested hashes' do
+      Setting.color.should == :grey # default
+      Setting.color(:pants).should == :purple # default
+
+      Setting.color(:pants, :school).should == :blue # in sample
+      Setting.color(:pants, :favorite).should == :orange # joes override
+
+      Setting.color(:shorts, :school).should == :black # in sample
+      Setting.color(:shorts, :favorite).should == :white # joe's override
+
+      Setting.color(:shorts).should == :stripes # joe's override of default
     end
 
   end
