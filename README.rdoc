@@ -2,7 +2,7 @@
 
 == Summary 
 
-This gem provides an easy and capistrano-friendly way to manage application configuration across 
+This gem provides an easy and Capistrano-friendly way to manage application configuration across 
 multiple environments, such as development, QA, staging, production, etc.
 
 Applications typically rely on configuration settings, such as host names, URLs, usernames and many
@@ -30,9 +30,9 @@ application configuration file:
 Setting Gem provides Setting.load(..) method to load configuration from files in a way that allows 
 some configuration files to override previously loaded values, and then offers a simple method API 
 to access the values, for example Setting.tax(:california) or Setting.tax.  Supporting default values
-in 2nd, 3rd, etc.. -level hashes is one of the advantages of using this gem.
+in 2nd, 3rd, .. - level hashes is one of the advantages of using this gem.
 
-By loading configuration from files, Setting is inherently compatible with Capistrano deployment 
+By loading configuration from YAML files, Setting gem is inherently compatible with Capistrano deployment 
 methodology, where a certain set of files may become "activated" by simply sym-linking them into 
 the appropriate settings folder.
 
@@ -49,9 +49,9 @@ code in the following way:
 * Setting.key_name(:sub_key_name, :sub_sub_key_name) returns value from the 3rd level hash if available. The algorithm is recursive, so only the maximum method stack depth will limit the number of nested hash values you can access this way.
 * Special syntax Setting[:key_name], Setting[:key_name][:sub_key_name], etc also supported. This method, however, does not support default values (see below).
 
-Method notation is recommended over square bracket notation for acessing single values. However, square bracket notation
-may be useful when you want to fetch the entire 2nd level hash that includes the default value, instead of the
-default value itself.
+Method notation is recommended over square bracket notation for accessing single values. However, 
+square bracket notation may be useful when you want to fetch the entire 2nd level hash that 
+includes the default value, instead of the default value itself.
 
 For example, given the above YAML file, you can access the settings in your code as follows:
 
@@ -62,12 +62,12 @@ For example, given the above YAML file, you can access the settings in your code
   Setting.states => [ 'CA', 'WA', 'NY' ]
   Setting.states['ship_to'] => [ 'CA', 'NY' ]
 
-Method calling notation allows passing an array of keys for nested hashes.  It also supports default values
-if provided.
+Method-calling notation allows passing an array of keys to fetch a value from a nested hash.  
+This method also supports returning a default value, stored against the "default" key.
 
   Setting.tax => 0.0
 
-Square bracket syntax returns the actual 2nd-level hash, without any regard for a default value:
+Square bracket syntax returns the actual nested hash, without any regard for the default value:
 
   Setting[:tax] => { 'default' => 0.0, 'california' => 7.5 } 
 
@@ -84,14 +84,14 @@ Consider an example:
                :files => ["default.yml", "environments/#{Rails.env}.yml"],
                :local => true)
 
-The argument is a parameter hash that configures which YML files to load, and in what order, and from where.
+The argument is an options hash that configures which YAML files to load, in what order, and from where.
 
-* :path specifies the "root" folder where settings files will be loaded from
-* :files is an array that lists file names relative to the :path. In the example above, settings folder contains subfolder "environments" where Rails-specific environment files are located (such as "development.yml", "staging.yml", "production.yml", etc)
-* :local can be optionally specified as a true value, and if specified Setting gem will load all *.yml files that live under the :path/local folder. 
+* path specifies the "root" folder where settings files will be loaded from
+* files is an array that lists file names relative to the :path. In the example above, settings folder contains subfolder "environments" where Rails-specific environment files are located (such as "development.yml", "staging.yml", "production.yml", etc)
+* local can be optionally specified as a true value, and if specified Setting gem will load all *.yml files that live under the :path/local folder. 
 
-Below is list of YML files loaded in order specified in the above example, assuming that "development" is
-the Rails environment, and "local" folder exists with 3 additional YML files in it:
+Below is list of YAML files loaded in order specified in the above example, assuming that "development" is
+the Rails environment, and "local" folder exists with 3 additional YAML files in it:
 
   config/settings/default.yml
   config/settings/environments/development.yml
@@ -99,15 +99,16 @@ the Rails environment, and "local" folder exists with 3 additional YML files in 
   config/settings/local/paypal.yml
   config/settings/local/other.yml
 
-Each YML file defines a ruby Hash.  During file loading, the hashes are merged, so that values loaded in early files may
-be overwritten by values in subsequent files. This is deliberate and by design: it allows you to create
-small "override" files for each environment, or even each machine you want to deploy to. Exactly how you split your
-application settings in files is up to you.
+Each YML file defines a ruby Hash.  During file loading, the hashes are merged, 
+so that values loaded in early files may be overwritten by values in subsequent 
+files. This is deliberate and by design: it allows you to create small "override" 
+files for each environment, or even each machine you want to deploy to. Exactly 
+how you split your application settings in files is up to you.
 
 == Nested Hashes and Default Values
 
-MC Setting gem provides a convenient way to access nested values, including full support for the default values within
-nested hashes (as of 0.1.1).
+MC Setting gem provides a convenient way to access nested values, including full 
+support for the default values within nested hashes (as of 0.1.1).
 
 Consider the following nested hash example:
 
@@ -123,11 +124,13 @@ default.yml:
 
   Setting.load(:files => ['default.yml'], :path => ...)
 
-  Setting.tax(:inventory)       => { :url => "http://localhost:3443/inventory_manager" :name => "Inventory Management"}
-  Setting.tax(:inventory, :url) => "http://localhost:3443/inventory_manager"
+  Setting.services(:inventory)       => { :url => "http://localhost:3443/inventory_manager" :name => "Inventory Management"}
+  Setting.services(:inventory, :url) => "http://localhost:3443/inventory_manager"
 
-staging.yml is changing URLs for services so they work in the staging environment.  Service URLs have been changed for
-staging only:
+staging.yml 
+
+We are changing URLs for services in staging.yml, so they work in the staging environment.  Service URLs have been updated
+to use localhost:
 
   services: 
     inventory:
@@ -135,14 +138,32 @@ staging only:
     shipping:
       url: http://localhost:8008/shipper
 
+
   Setting.load(:files => ['default.yml', 'staging.yml'], :path => ...)
 
-  Setting.tax(:inventory)       => { :url => "http://localhost:8009/inventory_manager" :name => "Inventory Management"}
-  Setting.tax(:inventory, :url) => "http://localhost:8008/inventory_manager"
+  Setting.services(:inventory)       => { :url => "http://localhost:8009/inventory_manager" :name => "Inventory Management"}
+  Setting.services(:inventory, :url) => "http://localhost:8008/inventory_manager"
 
 == Capistrano Recommendations
 
-TBD.
+Assume the directory structure of your Rails application is as follows:
+
+  config/settings/default.yml
+  config/settings/environments/development.yml
+  config/settings/environments/staging.yml
+  config/settings/environments/production.yml
+  config/settings/local
+  config/settings/systems/reporting.yml
+  config/settings/systems/admin.yml
+
+Note that the "local" directory is empty, and that "systems" directory contains several YAML files that provide alternative 
+configuration for a reporting server, and an admin server (both of which run in "production" rails environment).
+
+When deploying to the main production site, neither YAML files inside "systems" folder are activated or used.
+
+But upon deployment to the admin server, Capistrano could symlink "admin.yml" from config/settings/local folder, so the Setting gem
+would load these values. So for each Capistrano role, you can define which files need to be symlinked into local, thus creating
+a very flexible configuration scheme that's easily managed by Capistrano.
 
 == Copyright
 
