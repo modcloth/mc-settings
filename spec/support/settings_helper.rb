@@ -20,6 +20,10 @@ def stub_setting_files
       default: 7
     flag_false:
       default: false
+    nested_array:
+      - first
+      - second
+      - third
 CONTENT
   test = <<-CONTENT
     one: test
@@ -30,6 +34,10 @@ CONTENT
     six:
       extra: "recursively overriden"
     test_specific: "exist"
+    nested_array:
+      - first
+      - four
+      - five
   CONTENT
 
   empty = <<-CONTENT

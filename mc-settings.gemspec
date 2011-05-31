@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mc-settings}
-  s.version = "0.1.0"
+  s.version = "0.1.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Edwin Cruz", "Colin Shield"]
-  s.date = %q{2010-12-28}
+  s.authors = ["Edwin Cruz", "Konstantin Gredeskoul"]
+  s.date = %q{2011-01-18}
   s.description = %q{implement custom keys indenendently of environment}
   s.email = %q{rubydev@modcloth.com}
   s.extra_rdoc_files = [
@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
     "lib/mc-settings.rb",
     "lib/setting.rb",
     "mc-settings.gemspec",
+    "spec/fixtures/joes-colors.yml",
     "spec/fixtures/sample.yml",
     "spec/mc_settings_spec.rb",
     "spec/spec_helper.rb",

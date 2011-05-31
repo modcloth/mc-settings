@@ -5,7 +5,7 @@ class Hash
   def recursive_merge!(other)
     other.keys.each do |k|
       if self[k].is_a?(Array) && other[k].is_a?(Array)
-        self[k] += other[k]
+        self[k] = other[k]
       elsif self[k].is_a?(Hash) && other[k].is_a?(Hash)
         self[k].recursive_merge!(other[k])
       else

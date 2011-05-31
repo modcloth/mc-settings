@@ -52,6 +52,12 @@ describe Setting do
     it "should create keys if it does not exist" do
       Setting.test_specific.should == "exist"
     end
+
+    context "working with arrays" do
+      it "should replace the whole array instead of appending new values" do
+        Setting.nested_array.should == ['first', 'four', 'five']
+      end
+    end
   end
 
   context "When running with threads" do
