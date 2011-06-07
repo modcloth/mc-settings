@@ -1,0 +1,34 @@
+shipping_config:
+  default: Defaulted
+  domestic:
+    service: MyService
+    countries:
+      - "US"
+    non_shippable_regions:
+      - "US-AS"
+      - "US-GU"
+      - "US-MP"
+      - "US-PR"
+      - "US-UM"
+      - "US-VI"
+      - "US-AF"
+      - "US-AA"
+      - "US-AC"
+      - "US-AE"
+      - "US-AM"
+      - "US-AP"
+      - "US-FM"
+      - "US-PW"
+      - "US-MH"
+  international:
+    service: Foo
+    countries:
+      - "GU"
+      - "VI"
+      - "AS"
+      - "MP"
+      - "UM"
+      - "FR"
+      - "GR"
+      - "RU"
+    shipping_carrier: Bar

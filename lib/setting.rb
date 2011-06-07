@@ -138,9 +138,10 @@ class Setting
     else
       v
     end
-
-    if out.is_a?(Hash)
-      collapse_hashes(out, args)
+    if out.is_a?(Hash) && !args.empty?
+        collapse_hashes(out, args)
+    elsif out.is_a?(Hash) && out.has_key?('default')
+      out['default']
     else
       out
     end

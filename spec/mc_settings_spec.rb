@@ -126,4 +126,21 @@ describe Setting do
     end
 
   end
+  context "Complex nested configs" do
+    before :each do
+      Setting.reload(
+          :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
+          :files => ['shipping.yml']
+      )
+    end
+    it "should build correct tree with arrays and default values " do
+      Setting.shipping_config.should == "Defaulted"
+      Setting.shipping_config(:domestic, :non_shippable_regions).first.should == "US-AS"
+      Setting.shipping_config(:international, :service).should == 'Foo'
+      Setting.shipping_config(:international, :countries).size.should > 0
+      Setting.shipping_config(:international, :shipping_carrier).should == 'Bar'
+      #backward compatibility:
+      Setting.shipping_config(:domestic)['non_shippable_regions'].size.should > 0
+    end
+  end
 end
