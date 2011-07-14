@@ -1,5 +1,5 @@
 shipping_config:
-  default: Defaulted
+  default: <%= 'Defaulted' %>
   domestic:
     service: MyService
     countries:
@@ -32,3 +32,5 @@ shipping_config:
       - "GR"
       - "RU"
     shipping_carrier: Bar
+number: <%= 5%>
+stringified: <%= nil || "stringified"%>

@@ -50,10 +50,10 @@ CONTENT
 
   File.stub!(:exists?).and_return(true)
   File.stub!(:exists?).with("config/settings/environments/development.yml").and_return(false)
-  File.stub!(:open).with("config/settings/default.yml").and_return(defaults)
-  File.stub!(:open).with("config/settings/environments/test.yml").and_return(test)
-  File.stub!(:open).with("config/settings/local/custom.yml").and_return(custom)
-  File.stub!(:open).with("config/settings/local/empty.yml").and_return(empty)
+  IO.stub!(:read).with("config/settings/default.yml").and_return(defaults)
+  IO.stub!(:read).with("config/settings/environments/test.yml").and_return(test)
+  IO.stub!(:read).with("config/settings/local/custom.yml").and_return(custom)
+  IO.stub!(:read).with("config/settings/local/empty.yml").and_return(empty)
 
   Dir.stub!(:glob).and_return(["config/settings/local/empty.yml", "config/settings/local/custom.yml"])
 end

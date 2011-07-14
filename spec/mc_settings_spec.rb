@@ -143,4 +143,18 @@ describe Setting do
       Setting.shipping_config(:domestic)['non_shippable_regions'].size.should > 0
     end
   end
+
+  context "Ruby code inside yml file" do
+    before :each do
+      Setting.reload(
+          :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
+          :files => ['shipping.yml']
+      )
+    end
+    it "should interpret ruby code and put correct values" do
+      Setting.shipping_config.should == "Defaulted"
+      Setting.number == 5
+      Setting.stringified == "stringified"
+    end
+  end
 end

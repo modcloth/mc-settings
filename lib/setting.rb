@@ -1,5 +1,6 @@
 require 'singleton'
 require 'yaml'
+require 'erb'
 
 class Hash
   def recursive_merge!(other)
@@ -168,7 +169,7 @@ class Setting
 
     files.flatten.each do |file|
       begin
-        @available_settings.recursive_merge!(YAML::load(File.open(file)) || {}) if File.exists?(file)
+        @available_settings.recursive_merge!(YAML::load(ERB.new(IO.read(file)).result) || {}) if File.exists?(file)
       rescue Exception => e
         raise FileError.new("Error parsing file #{file}, with: #{e.message}")
       end
