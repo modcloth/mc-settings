@@ -164,7 +164,7 @@ class Setting
     end
 
     if params[:local]
-      files << Dir.glob(File.join(path, 'local', '*.yml'))
+      files << Dir.glob(File.join(path, 'local', '*.yml')).sort
     end
 
     files.flatten.each do |file|
