@@ -113,7 +113,7 @@ class Setting
       v = yield(v, args)
     end
 
-    if v.is_a?(Fixnum) && bool
+    if v.is_a?(Integer) && bool
       v.to_i > 0
     else
       v
