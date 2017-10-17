@@ -66,6 +66,11 @@ class Setting
     end
   end
 
+  def self.respond_to?(method_name, include_private = false)
+    self.instance.available_settings.has_key?(method_name.to_s.sub(/\?\z/, '')) ||
+      super
+  end
+
   # In [] invocation syntax, we return settings value 'as is' without
   # Hash conversions.
   #
