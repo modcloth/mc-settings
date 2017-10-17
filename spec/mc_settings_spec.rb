@@ -13,6 +13,7 @@ describe Setting do
 
     it 'should return test specific values' do
       subject.available_settings['one'].should == "test"
+      expect(subject.respond_to?(:one)).to eq(true)
       subject.one.should == "test"
       subject['one'].should == "test"
     end
@@ -37,6 +38,7 @@ describe Setting do
     end
 
     it "should responds to ? mark" do
+      expect(subject.respond_to?(:autologin?)).to eq(true)
       subject.autologin?.should == true
     end
 
@@ -51,6 +53,7 @@ describe Setting do
 
     it "should create keys if it does not exist" do
       subject.test_specific.should == "exist"
+      expect(subject.respond_to?(:test_specific)).to eq(true)
     end
 
     context "working with arrays" do
@@ -81,6 +84,7 @@ describe Setting do
     it 'should support [] syntax' do
       subject['tax']['default'].should == 0.0
       subject['tax'].should == { 'default' => 0.0, 'california' => 7.5 }
+      expect(subject.respond_to?(:[])).to eq(true)
     end
 
     it 'should support method invocation syntax' do
