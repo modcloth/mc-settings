@@ -48,12 +48,12 @@ CONTENT
       default: "seven from custom"
   CONTENT
 
-  File.stub!(:exists?).and_return(true)
-  File.stub!(:exists?).with("config/settings/environments/development.yml").and_return(false)
-  IO.stub!(:read).with("config/settings/default.yml").and_return(defaults)
-  IO.stub!(:read).with("config/settings/environments/test.yml").and_return(test)
-  IO.stub!(:read).with("config/settings/local/custom.yml").and_return(custom)
-  IO.stub!(:read).with("config/settings/local/empty.yml").and_return(empty)
+  File.stub(:exists?).and_return(true)
+  File.stub(:exists?).with("config/settings/environments/development.yml").and_return(false)
+  IO.stub(:read).with("config/settings/default.yml").and_return(defaults)
+  IO.stub(:read).with("config/settings/environments/test.yml").and_return(test)
+  IO.stub(:read).with("config/settings/local/custom.yml").and_return(custom)
+  IO.stub(:read).with("config/settings/local/empty.yml").and_return(empty)
 
-  Dir.stub!(:glob).and_return(["config/settings/local/empty.yml", "config/settings/local/custom.yml"])
+  Dir.stub(:glob).and_return(["config/settings/local/empty.yml", "config/settings/local/custom.yml"])
 end
