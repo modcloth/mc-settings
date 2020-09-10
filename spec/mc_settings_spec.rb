@@ -1,70 +1,76 @@
+# frozen_string_literal: true
+
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require 'mc-settings'
 describe Setting do
-  subject { Setting }
+  subject { described_class }
 
   context "Test with stubs" do
     before :each do
       stub_setting_files
       subject.reload(
-          :path  => "config/settings",
-          :files => ["default.yml", "environments/test.yml"],
-          :local => true)
+        path:  "config/settings",
+        files: %w[default.yml environments/test.yml],
+        local: true
+      )
     end
 
     it 'should return test specific values' do
-      subject.available_settings['one'].should == "test"
-      subject.one.should == "test"
-      subject['one'].should == "test"
+      expect(subject.available_settings['one']).to eql "test"
+      expect(subject.one).to eql "test"
+      expect(subject['one']).to eql "test"
     end
 
     it "should handle custom values overriding everything else" do
-      subject.seven.should == "seven from custom"
+      expect(subject.seven).to eql "seven from custom"
     end
 
+    let(:six) { { "default" => "default value", "extra" => "recursively overriden", "deep_level" => { "value" => "even deeper level" } } }
+
     it "handles multiple values" do
-      subject[:six].should == {"default"=>"default value", "extra"=>"recursively overriden", "deep_level"=>{"value"=>"even deeper level"}}
-      subject.available_settings['six']['default'].should == "default value"
-      subject.seven.should == "seven from custom"
+      expect(subject[:six]).to eql six
+      expect(subject.available_settings['six']['default']).to eql "default value"
+      expect(subject.seven).to eql "seven from custom"
     end
 
     it "handles default key" do
-      subject.default_setting.should == 1
-      subject['seven']['default'].should == "seven from custom"
+      expect(subject.default_setting).to eql 1
+      expect(subject['seven']['default']).to eql "seven from custom"
     end
 
     it "should handle empty strings" do
-      subject.empty.should == ""
+      expect(subject.empty).to eql ""
     end
 
     it "should responds to ? mark" do
-      subject.autologin?.should == true
+      expect(subject.autologin?).to eql true
     end
 
     it "should returns false correctly" do
-      subject.flag_false.should be(false)
+      expect(subject.flag_false).to be_falsey
     end
 
-    it "should merge keys recursivelly" do
-      subject.six(:extra).should == "recursively overriden"
-      subject.six(:deep_level, :value).should == "even deeper level"
+    it "should merge keys recursively" do
+      expect(subject.six(:extra)).to eql "recursively overriden"
+      expect(subject.six(:deep_level, :value)).to eql "even deeper level"
     end
 
     it "should create keys if it does not exist" do
-      subject.test_specific.should == "exist"
+      expect(subject.test_specific).to eql "exist"
     end
 
     context "working with arrays" do
       it "should replace the whole array instead of appending new values" do
-        subject.nested_array.should == ['first', 'four', 'five']
+        expect(subject.nested_array).to eql %w[first four five]
       end
     end
   end
 
   context "When running with threads" do
     it "should keep its values" do
-      3.times do |time|
+      3.times do |_time|
         Thread.new {
-          subject.available_settings.shoud_not be_empty
+          expect(subject.available_settings).not_to be_empty
         }
       end
     end
@@ -73,88 +79,83 @@ describe Setting do
   context "Test from file" do
     before :each do
       subject.reload(
-         :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
-         :files => ['sample.yml']
+        path:  File.join(File.dirname(__FILE__)) + '/fixtures',
+        files: ['sample.yml']
       )
     end
 
     it 'should support [] syntax' do
-      subject['tax']['default'].should == 0.0
-      subject['tax'].should == { 'default' => 0.0, 'california' => 7.5 }
+      expect(subject['tax']['default']).to eql 0.0
+      expect(subject['tax']).to eql( 'default' => 0.0, 'california' => 7.5 )
     end
 
     it 'should support method invocation syntax' do
-      subject.tax.should == 0.0
-
-      subject.tax(:default).should     == subject.tax
-      subject.tax('default').should    == subject.tax
-      subject.tax(:california).should  == 7.5
-
-      subject.states.should            == ['CA', 'WA', 'NY']
-      subject.states(:default).should  == subject.states
-      subject.states(:ship_to).should  == ['CA', 'NY']
+      expect(subject.tax).to eql 0.0
+      expect(subject.states).to eql  %w[CA WA NY]
+      expect(subject.tax(:default)).to eql subject.tax
+      expect(subject.tax('default')).to eql subject.tax
+      expect(subject.tax(:california)).to eql 7.5
+      expect(subject.states(:default)).to eql subject.states
+      expect(subject.states(:ship_to)).to eql %w[CA NY]
     end
 
     it 'should correctly process Boolean values' do
-      subject.boolean_true?.should be(true)
-      subject.boolean_true.should == 4
-      subject.boolean_false?.should be(false)
-      subject.boolean_false?(:default).should be(false)
-      subject.boolean_false?(:negated).should be(true)
+      expect(subject.boolean_true?).to be_truthy
+      expect(subject.boolean_true).to eql 4
+      expect(subject.boolean_false?).to be_falsey
+      expect(subject.boolean_false?(:default)).to be_falsey
+      expect(subject.boolean_false?(:negated)).to be_truthy
     end
   end
 
   context "Test recursive overrides and nested hashes" do
     before :each do
       subject.reload(
-         :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
-         :files => ['sample.yml', 'joes-colors.yml']
+        path:  File.join(File.dirname(__FILE__)) + '/fixtures',
+        files: %w[sample.yml joes-colors.yml]
       )
     end
 
     it 'should override colors with Joes and support nested hashes' do
-      subject.color.should == :grey # default
-      subject.color(:pants).should == :purple # default
-
-      subject.color(:pants, :school).should == :blue # in sample
-      subject.color(:pants, :favorite).should == :orange # joes override
-
-      subject.color(:shorts, :school).should == :black # in sample
-      subject.color(:shorts, :favorite).should == :white # joe's override
-
-      subject.color(:shorts).should == :stripes # joe's override of default
+      expect(subject.color).to eql :grey # default
+      expect(subject.color(:pants)).to eql :purple # default
+      expect(subject.color(:pants, :school)).to eql :blue # in sample
+      expect(subject.color(:pants, :favorite)).to eql :orange # joes override
+      expect(subject.color(:shorts,:school)).to eql :black # in sample
+      expect(subject.color(:shorts, :favorite)).to eql :white # joe's override
+      expect(subject.color(:shorts)).to  eql :stripes # joe's override of default
     end
-
   end
+
   context "Complex nested configs" do
     before :each do
       subject.reload(
-          :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
-          :files => ['shipping.yml']
+        path:  File.join(File.dirname(__FILE__)) + '/fixtures',
+        files: ['shipping.yml']
       )
     end
+
     it "should build correct tree with arrays and default values " do
-      subject.shipping_config.should == "Defaulted"
-      subject.shipping_config(:domestic, :non_shippable_regions).first.should == "US-AS"
-      subject.shipping_config(:international, :service).should == 'Foo'
-      subject.shipping_config(:international, :countries).size.should > 0
-      subject.shipping_config(:international, :shipping_carrier).should == 'Bar'
-      #backward compatibility:
-      subject.shipping_config(:domestic)['non_shippable_regions'].size.should > 0
+      expect(subject.shipping_config).to eql "Defaulted"
+      expect(subject.shipping_config(:domestic, :non_shippable_regions).first).to eql "US-AS"
+      expect(subject.shipping_config(:international, :service)).to eql 'Foo'
+      expect(subject.shipping_config(:international, :countries).size).to be > 0
+      expect(subject.shipping_config(:international, :shipping_carrier)).to eql 'Bar'
+      expect(subject.shipping_config(:domestic)['non_shippable_regions'].size).to be > 0
     end
   end
 
   context "Ruby code inside yml file" do
     before :each do
       subject.reload(
-          :path  => File.join(File.dirname(__FILE__)) + '/fixtures',
-          :files => ['shipping.yml']
+        path:  File.join(File.dirname(__FILE__)) + '/fixtures',
+        files: ['shipping.yml']
       )
     end
     it "should interpret ruby code and put correct values" do
-      subject.shipping_config.should == "Defaulted"
-      subject.number == 5
-      subject.stringified == "stringified"
+      expect(subject.shipping_config).to eql "Defaulted"
+      expect(subject.number).to eql 5
+      expect(subject.stringified).to eql "stringified"
     end
   end
 end

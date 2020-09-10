@@ -1,5 +1,5 @@
 def stub_setting_files
-  defaults = <<-CONTENT
+  defaults = <<~YAML
     one: default
     two:
       three: 3
@@ -24,8 +24,9 @@ def stub_setting_files
       - first
       - second
       - third
-CONTENT
-  test = <<-CONTENT
+  YAML
+
+  test = <<~YAML
     one: test
     two:
       three: 5
@@ -38,22 +39,31 @@ CONTENT
       - first
       - four
       - five
-  CONTENT
+  YAML
 
-  empty = <<-CONTENT
-  CONTENT
+  empty = <<~YAML
+  YAML
 
-  custom = <<-CONTENT
+  custom = <<~YAML
     seven:
       default: "seven from custom"
-  CONTENT
+  YAML
 
-  File.stub!(:exists?).and_return(true)
-  File.stub!(:exists?).with("config/settings/environments/development.yml").and_return(false)
-  IO.stub!(:read).with("config/settings/default.yml").and_return(defaults)
-  IO.stub!(:read).with("config/settings/environments/test.yml").and_return(test)
-  IO.stub!(:read).with("config/settings/local/custom.yml").and_return(custom)
-  IO.stub!(:read).with("config/settings/local/empty.yml").and_return(empty)
+  %w[
+    config/settings/default.yml
+    config/settings/environments/test.yml
+    config/settings/local/custom.yml
+    config/settings/local/empty.yml
+  ].each do |path|
+    allow(File).to receive(:exist?).with(path).and_return(true)
+  end
 
-  Dir.stub!(:glob).and_return(["config/settings/local/empty.yml", "config/settings/local/custom.yml"])
+  allow(File).to receive(:exist?).with("config/settings/environments/development.yml").and_return(false)
+
+  allow(IO).to receive(:read).with("config/settings/default.yml").and_return(defaults)
+  allow(IO).to receive(:read).with("config/settings/environments/test.yml").and_return(test)
+  allow(IO).to receive(:read).with("config/settings/local/custom.yml").and_return(custom)
+  allow(IO).to receive(:read).with("config/settings/local/empty.yml").and_return(empty)
+
+  allow(Dir).to receive(:glob).and_return(%w[config/settings/local/empty.yml config/settings/local/custom.yml])
 end
